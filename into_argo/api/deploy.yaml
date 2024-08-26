@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    name: 'phoneshin-api'
+    name: ''
     namespace: phoneshin
     server: 'https://kubernetes.default.svc'
   source:

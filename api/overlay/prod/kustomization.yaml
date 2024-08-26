@@ -15,7 +15,7 @@ patches:
       name: phoneshin-api-svc
   - path: vs.yaml
     target:
-      kind: Ingress
+      kind: VirtualService
       name: phoneshin-api-vs
 
 images:
