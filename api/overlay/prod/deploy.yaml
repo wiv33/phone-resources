@@ -56,4 +56,4 @@ spec:
             failureThreshold: 3
       restartPolicy: Always
       imagePullSecrets:
-        - name: tlshyej-regcred
+        - name: istio-system/tlshyej-regcred
