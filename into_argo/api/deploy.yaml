@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: phoneshin-api
+  namespace: argocd
+spec:
+  destination:
+    name: 'phoneshin-api'
+    namespace: phoneshin
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: api/overlay/prod
+    repoURL: 'https://github.com/wiv33/phone-resources'
+    targetRevision: HEAD
+    kustomize:
+      namePrefix: ''
+  sources: []
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

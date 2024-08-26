@@ -1,0 +1,24 @@
+namespace: phoneshin
+commonLabels:
+  app: phoneshin-api
+  env: prod
+resources:
+  - ../../base
+patches:
+  - path: deploy.yaml
+    target:
+      kind: Deployment
+      name: phoneshin-api-deploy
+  - path: service.yaml
+    target:
+      kind: Service
+      name: phoneshin-api-svc
+  - path: vs.yaml
+    target:
+      kind: Ingress
+      name: phoneshin-api-vs
+
+images:
+  - name: 'tlshyej/phoneshin-api'
+    newName: 'tlshyej/phoneshin-api'
+    newTag: latest

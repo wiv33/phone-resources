@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoneshin-api-deploy
+  labels:
+    app: phoneshin-api
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: phoneshin-api
+  template:
+    metadata:
+      name: phoneshin-api
+      labels:
+        app: phoneshin-api
+    spec:
+      containers:
+        - name: phoneshin-api-deploy
+          image: 'tlshyej/phoneshin-api:latest'
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "4Gi"
+            limits:
+              cpu: "1000m"
+              memory: "8Gi"
+          env:
+            - name: TZ
+              value: Asia/Seoul
+            - name: DEPLOY_ENV
+              value: prod
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 8
+            successThreshold: 1
+            failureThreshold: 7
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: tlshyej-regcred
