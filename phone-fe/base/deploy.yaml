@@ -21,7 +21,7 @@ spec:
         app: phoneshin-fe
     spec:
       containers:
-        - name: phoneshin-fe-deploy
+        - name: phoneshin-fe
           image: 'registry-harbor.phoneshin.com/phoneshin/fe:latest'
           imagePullPolicy: Always
           resources:
