@@ -36,6 +36,9 @@ spec:
               value: Asia/Seoul
             - name: DEPLOY_ENV
               value: prod
+          ports:
+            - containerPort: 8080
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /actuator/health
