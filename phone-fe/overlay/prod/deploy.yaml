@@ -56,4 +56,4 @@ spec:
             failureThreshold: 3
       restartPolicy: Always
       imagePullSecrets:
-        - name: inner-harbor-registry
+        - name: psawesome-regcred
