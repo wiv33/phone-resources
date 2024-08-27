@@ -4,7 +4,7 @@ metadata:
   name: phoneshin-api-vs
 spec:
   hosts:
-    - "api-phoneshin.com"
+    - "api.phoneshin.com"
   gateways:
     - istio-system/istio-system-gateway
   http:
@@ -13,6 +13,6 @@ spec:
             prefix: /
       route:
         - destination:
-            host: phoneshin-api-svc
+            host: phoneshin-api-svc.phoneshin.svc.cluster.local
             port:
               number: 8080
