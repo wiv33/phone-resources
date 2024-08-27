@@ -9,7 +9,7 @@ spec:
     namespace: phoneshin
     server: 'https://kubernetes.default.svc'
   source:
-    path: api/overlay/prod
+    path: phone-api/overlay/prod
     repoURL: 'https://github.com/wiv33/phone-resources'
     targetRevision: HEAD
     kustomize:
