@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: phoneshin-api-deploy
-          image: 'tlshyej/phoneshin-api:latest'
+          image: 'registry-harbor.phoneshin.com/phoneshin/api:latest'
           imagePullPolicy: Always
           resources:
             requests:
@@ -56,4 +56,4 @@ spec:
             failureThreshold: 3
       restartPolicy: Always
       imagePullSecrets:
-        - name: tlshyej-regcred
+        - name: inner-harbor-registry

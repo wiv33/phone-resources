@@ -19,6 +19,6 @@ patches:
       name: phoneshin-api-vs
 
 images:
-  - name: 'tlshyej/phoneshin-api'
-    newName: 'tlshyej/phoneshin-api'
+  - name: 'registry-harbor.phoneshin.com/phoneshin/api'
+    newName: 'registry-harbor.phoneshin.com/phoneshin/api'
     newTag: latest
