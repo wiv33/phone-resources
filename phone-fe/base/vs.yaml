@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: phoneshin-fe-vs
+spec:
+  hosts:
+    - "phoneshin.com"
+  gateways:
+    - istio-system/istio-system-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: phoneshin-fe-svc
+            port:
+              number: 8080

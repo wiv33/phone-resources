@@ -1,0 +1,23 @@
+namespace: phoneshin
+commonLabels:
+  app: phoneshin-fe
+  env: prod
+resources:
+  - ../../base
+patches:
+  - path: deploy.yaml
+    target:
+      kind: Deployment
+      name: phoneshin-fe-deploy
+  - path: service.yaml
+    target:
+      kind: Service
+      name: phoneshin-fe-svc
+  - path: vs.yaml
+    target:
+      kind: VirtualService
+      name: phoneshin-fe-vs
+images:
+  - name: 'registry-harbor.phoneshin.com/phoneshin/fe'
+    newName: 'registry-harbor.phoneshin.com/phoneshin/fe'
+    newTag: latest
