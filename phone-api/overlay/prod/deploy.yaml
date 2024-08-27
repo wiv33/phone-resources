@@ -21,7 +21,7 @@ spec:
         app: phoneshin-api
     spec:
       containers:
-        - name: phoneshin-api-deploy
+        - name: phoneshin-api
           image: 'registry-harbor.phoneshin.com/phoneshin/api:latest'
           imagePullPolicy: Always
           resources:
