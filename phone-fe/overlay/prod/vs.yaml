@@ -6,13 +6,13 @@ spec:
   hosts:
     - "phoneshin.com"
   gateways:
-    - istio-system/phoneshin-gateway
+    - istio-system/istio-system-gateway
   http:
     - match:
         - uri:
             prefix: /
       route:
         - destination:
-            host: phoneshin-fe-svc.phoneshin.svc.cluster.local
+            host: phoneshin-fe-svc
             port:
               number: 8080
