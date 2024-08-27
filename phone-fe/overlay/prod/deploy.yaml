@@ -36,6 +36,9 @@ spec:
               value: Asia/Seoul
             - name: DEPLOY_ENV
               value: prod
+          ports:
+            - containerPort: 8080
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /
@@ -56,4 +59,4 @@ spec:
             failureThreshold: 3
       restartPolicy: Always
       imagePullSecrets:
-        - name: psawesome-regcred
+        - name: inner-harbor-registry

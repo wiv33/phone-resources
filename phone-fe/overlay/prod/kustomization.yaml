@@ -19,5 +19,5 @@ patches:
       name: phoneshin-fe-vs
 images:
   - name: 'registry-harbor.phoneshin.com/phoneshin/fe'
-    newName: 'psawesome/phoneshin-fe'
-    newTag: latest
+    newName: 'registry-harbor.phoneshin.com/phoneshin/fe'
+    newTag: 64bde739fd9ffbcfafe5209d8b3dfe6ba1f6b1c5
