@@ -17,8 +17,7 @@ patches:
     target:
       kind: VirtualService
       name: phoneshin-api-vs
-
 images:
   - name: 'registry-harbor.phoneshin.com/phoneshin/api'
     newName: 'registry-harbor.phoneshin.com/phoneshin/api'
-    newTag: latest
+    newTag: 27c84c29dc403338227ff52071ed817e849bb898
