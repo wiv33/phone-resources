@@ -50,7 +50,7 @@ resource "kubernetes_manifest" "kafka-vs" {
     }
     spec = {
       hosts = ["*"]
-      gateways = ["istio-system/tcp-gateway"]
+      gateways = ["istio-ingress/tcp-gateway"]
       tcp = [
         {
           match = [
@@ -123,7 +123,7 @@ resource "kubernetes_manifest" "kafka-ui-vs" {
     }
     spec = {
       hosts = ["kui.phoneshin.com"]
-      gateways = ["istio-system/istio-system-gateway"]
+      gateways = ["istio-ingress/default-gateway"]
       http = [
         {
           match = [

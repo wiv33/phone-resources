@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "gateway-tcp" {
     kind       = "Gateway"
     metadata = {
       name      = "tcp-gateway"
-      namespace = "istio-system"
+      namespace = "istio-ingress"
     }
     spec = {
       selector = {

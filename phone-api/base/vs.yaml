@@ -6,7 +6,7 @@ spec:
   hosts:
     - "api.phoneshin.com"
   gateways:
-    - istio-system/istio-system-gateway
+    - istio-ingress/default-gateway
   http:
     - match:
         - uri:
