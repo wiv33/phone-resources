@@ -66,6 +66,25 @@ resource "helm_release" "harbor" {
     name  = "service.type"
     value = "ClusterIP"
   }
+
+  set {
+    name  = "portal.nodeSelector.kubernetes\\.io/hostname"
+    value = "devops-worker"
+  }
+
+  set {
+    name  = "core.nodeSelector.kubernetes\\.io/hostname"
+    value = "devops-worker"
+  }
+  set {
+    name  = "registry.nodeSelector.kubernetes\\.io/hostname"
+    value = "devops-worker"
+  }
+  set {
+    name  = "jobservice.nodeSelector.kubernetes\\.io/hostname"
+    value = "devops-worker"
+  }
+
 }
 
 resource "kubernetes_manifest" "harbor_vs" {
@@ -84,7 +103,7 @@ resource "kubernetes_manifest" "harbor_vs" {
           match = [
             {
               uri = {
-                prefix = "/c"
+                prefix = "/c/"
               }
             },
             {
@@ -95,6 +114,11 @@ resource "kubernetes_manifest" "harbor_vs" {
             {
               uri = {
                 prefix = "/service"
+              }
+            },
+            {
+              uri = {
+                prefix = "/chartrepo"
               }
             }
           ]
