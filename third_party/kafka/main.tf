@@ -50,7 +50,7 @@ resource "kubernetes_manifest" "kafka-vs" {
     }
     spec = {
       hosts = ["*"]
-      gateways = ["istio-ingress/tcp-gateway"]
+      gateways = ["istio-ingress/default-gateway"]
       tcp = [
         {
           match = [

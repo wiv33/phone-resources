@@ -13,7 +13,7 @@ resource "kubernetes_manifest" "postgresql-vs" {
 
     spec = {
       hosts = ["*"]
-      gateways = ["istio-system/tcp-gateway"]
+      gateways = ["istio-ingress/default-gateway"]
       tcp = [
         {
           match = [
