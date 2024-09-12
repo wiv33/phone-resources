@@ -4,7 +4,7 @@ resource "helm_release" "bitnami_keycloak" {
   repository = "https://charts.bitnami.com/bitnami"
   name       = "keycloak"
   namespace  = "keycloak"
-  version    = "22.2.1"
+  version    = "22.2.2"
   replace    = true
   timeout    = 120
 
