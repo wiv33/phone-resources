@@ -4,8 +4,9 @@ metadata:
   name: phoneshin-fe-vs
 spec:
   hosts:
-    - "app.phoneshin.com"
+    - "phoneshin.com"
     - "www.phoneshin.com"
+    - "app.phoneshin.com"
   gateways:
     - istio-ingress/default-gateway
   http:
