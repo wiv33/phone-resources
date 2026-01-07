@@ -45,6 +45,14 @@ spec:
               value: phonegod
             - name: ALIGO_SENDER
               value: '01059300504'
+            - name: MESSAGING_AUTO_SEND_ENABLED
+              value: 'true'
+            - name: MESSAGING_AUTO_SEND_CONCURRENCY
+              value: '10'
+            - name: MESSAGING_DELIVERY_STATUS_ENABLED
+              value: 'true'
+            - name: MESSAGING_DELIVERY_STATUS_CONCURRENCY
+              value: '5'
           ports:
             - containerPort: 8080
               protocol: TCP
