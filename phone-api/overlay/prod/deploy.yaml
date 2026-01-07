@@ -38,7 +38,7 @@ spec:
             - name: DEPLOY_ENV
               value: prod
             - name: ALIGO_TEST_MODE
-              value: 'true'
+              value: 'false'
             - name: ALIGO_API_KEY
               value: 41uk8mbbwuee383r1nbrtbrfeumveb9n
             - name: ALIGO_USER_ID
