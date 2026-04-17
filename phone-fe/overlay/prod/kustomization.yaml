@@ -20,4 +20,4 @@ patches:
 images:
   - name: 'registry-harbor.phoneshin.com/phoneshin/fe'
     newName: 'registry-harbor.phoneshin.com/phoneshin/fe'
-    newTag: 2d0217a3b9120a20e9c2f029c7354fe0da75e9a7
+    newTag: e010a5451a6d7bf262737065bcf34404946f48d7
