@@ -53,6 +53,8 @@ spec:
               value: 'true'
             - name: MESSAGING_DELIVERY_STATUS_CONCURRENCY
               value: '5'
+            - name: CRYPTO_SECRET
+              value: '4cP2A/zDm6Y4opYjQgHxCR/F1hGDUB+sdfhDI45FbzM='
           ports:
             - containerPort: 8080
               protocol: TCP
