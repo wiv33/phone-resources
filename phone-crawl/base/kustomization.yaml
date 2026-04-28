@@ -4,4 +4,10 @@ commonLabels:
   app: phoneshin-crawl
 resources:
   - cronjob.yaml
-  - secret.yaml
+# secret 은 ArgoCD 관리 X — public repo 라 placeholder 만 두는 위험 회피.
+# 운영 적용은 kubectl create secret 으로 별도 관리:
+#   kubectl create secret generic phoneshin-crawl-secret \
+#     --from-literal=phone-api-auth-token=<INTERNAL_TOKEN> \
+#     --from-literal=firecrawl-api-key=<FIRECRAWL_API_KEY> \
+#     --from-literal=slack-webhook-url=<SLACK_WEBHOOK> \
+#     -n phoneshin --dry-run=client -o yaml | kubectl apply -f -
