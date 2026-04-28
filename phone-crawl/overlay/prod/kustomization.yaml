@@ -11,5 +11,5 @@ patches:
       name: phoneshin-crawl-subsidy
 images:
   - name: 'registry-harbor.phoneshin.com/phoneshin/crawl'
-    newName: 'registry-harbor.phoneshin.com/phoneshin/crawl'
+    newName: 'ghcr.io/wiv33/phone-crawl'
     newTag: 57fb11a628c43d7bb67eb52aabbe274dfc6bde16
