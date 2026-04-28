@@ -1,0 +1,12 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: phoneshin-crawl-subsidy
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: phoneshin-crawl
+              image: 'registry-harbor.phoneshin.com/phoneshin/crawl:latest'

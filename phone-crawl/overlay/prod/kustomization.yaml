@@ -1,0 +1,15 @@
+namespace: phoneshin
+commonLabels:
+  app: phoneshin-crawl
+  env: prod
+resources:
+  - ../../base
+patches:
+  - path: cronjob.yaml
+    target:
+      kind: CronJob
+      name: phoneshin-crawl-subsidy
+images:
+  - name: 'registry-harbor.phoneshin.com/phoneshin/crawl'
+    newName: 'registry-harbor.phoneshin.com/phoneshin/crawl'
+    newTag: latest

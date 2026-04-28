@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: phoneshin-crawl-subsidy
+  labels:
+    app: phoneshin-crawl
+    target: subsidy
+spec:
+  # 매주 월요일 04:00 KST (= 일요일 19:00 UTC)
+  # K8s 1.24+ timeZone 필드 지원
+  schedule: "0 4 * * 1"
+  timeZone: "Asia/Seoul"
+  concurrencyPolicy: Forbid           # 이전 실행 진행 중이면 신규 스킵
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  startingDeadlineSeconds: 3600       # 노드 다운 등으로 1시간 이상 지연 시 skip
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 14400    # 4시간 — rate limit 1req/5sec * 1500items 상한
+      ttlSecondsAfterFinished: 604800 # 7일 후 자동 정리
+      template:
+        metadata:
+          labels:
+            app: phoneshin-crawl
+            target: subsidy
+        spec:
+          restartPolicy: OnFailure
+          imagePullSecrets:
+            - name: inner-harbor-registry
+          containers:
+            - name: phoneshin-crawl
+              image: 'registry-harbor.phoneshin.com/phoneshin/crawl:latest'
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  cpu: "300m"
+                  memory: "512Mi"
+                limits:
+                  cpu: "1000m"
+                  memory: "2Gi"
+              env:
+                - name: TZ
+                  value: Asia/Seoul
+                - name: DEPLOY_ENV
+                  value: prod
+                - name: PHONE_API_INGEST_ENDPOINT
+                  value: 'http://phoneshin-api-svc.phoneshin.svc.cluster.local:8080/v1/internal/ingest/subsidy'
+                - name: PHONE_API_AUTH_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: phoneshin-crawl-secret
+                      key: phone-api-auth-token
