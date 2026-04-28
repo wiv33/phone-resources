@@ -28,6 +28,10 @@ spec:
           restartPolicy: OnFailure
           nodeSelector:
             kubernetes.io/hostname: backbone-worker
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
           imagePullSecrets:
             - name: inner-harbor-registry
           containers:
