@@ -33,7 +33,7 @@ spec:
               operator: Exists
               effect: NoSchedule
           imagePullSecrets:
-            - name: inner-harbor-registry
+            - name: ghcr-pull-secret
           containers:
             - name: phoneshin-crawl
               image: 'registry-harbor.phoneshin.com/phoneshin/crawl:latest'
