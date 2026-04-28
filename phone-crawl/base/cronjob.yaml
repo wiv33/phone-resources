@@ -26,6 +26,8 @@ spec:
             target: subsidy
         spec:
           restartPolicy: OnFailure
+          nodeSelector:
+            kubernetes.io/hostname: backbone-worker
           imagePullSecrets:
             - name: inner-harbor-registry
           containers:
