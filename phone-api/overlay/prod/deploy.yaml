@@ -55,6 +55,11 @@ spec:
               value: '5'
             - name: CRYPTO_SECRET
               value: '4cP2A/zDm6Y4opYjQgHxCR/F1hGDUB+sdfhDI45FbzM='
+            - name: PHONE_API_INTERNAL_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: phoneshin-crawl-secret
+                  key: phone-api-auth-token
           ports:
             - containerPort: 8080
               protocol: TCP
