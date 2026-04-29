@@ -12,4 +12,4 @@ patches:
 images:
   - name: 'registry-harbor.phoneshin.com/phoneshin/crawl'
     newName: 'registry-harbor.phoneshin.com/phoneshin/crawl'
-    newTag: 484ff908a7062bba7b78e6ce4a0520ccd2af5f4e
+    newTag: 40279b0032338848efbc6037e68225f5847ba31e
