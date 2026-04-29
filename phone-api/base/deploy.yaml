@@ -36,6 +36,9 @@ spec:
               value: Asia/Seoul
             - name: DEPLOY_ENV
               value: prod
+            # Phase 7.5: fabric8 K8s 클라이언트 빈 활성 — SyncTriggerService 사용
+            - name: PHONESHIN_K8S_ENABLED
+              value: "true"
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -58,5 +61,7 @@ spec:
             successThreshold: 1
             failureThreshold: 3
       restartPolicy: Always
+      # Phase 7.5: SA — namespace 내 CronJob/Job 조작 권한 (rbac.yaml 참조)
+      serviceAccountName: phoneshin-api-sa
       imagePullSecrets:
         - name: inner-harbor-registry

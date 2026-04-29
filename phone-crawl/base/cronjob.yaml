@@ -6,9 +6,10 @@ metadata:
     app: phoneshin-crawl
     target: subsidy
 spec:
-  # 매주 월요일 04:00 KST (= 일요일 19:00 UTC)
+  # 매일 04:00 KST — 단말 공시지원금은 캐리어가 일 단위로 변경 가능
+  # Phase 7.5: 주 1회 → 매일로 변경. 카드/유선은 별도 CronJob 으로 분리.
   # K8s 1.24+ timeZone 필드 지원
-  schedule: "0 4 * * 1"
+  schedule: "0 4 * * *"
   timeZone: "Asia/Seoul"
   concurrencyPolicy: Forbid           # 이전 실행 진행 중이면 신규 스킵
   successfulJobsHistoryLimit: 3
@@ -50,6 +51,10 @@ spec:
                   value: Asia/Seoul
                 - name: DEPLOY_ENV
                   value: prod
+                # Phase 7.5: 어떤 작업을 실행할지 분기.
+                # 옵션: subsidy | card | wireline (현재는 subsidy 만 구현, 나머지는 Phase 8/9)
+                - name: CRAWL_TARGET
+                  value: subsidy
                 - name: PHONE_API_INGEST_ENDPOINT
                   value: 'http://phoneshin-api-svc.phoneshin.svc.cluster.local:8080/v1/internal/ingest/subsidy'
                 - name: PHONE_API_AUTH_TOKEN
