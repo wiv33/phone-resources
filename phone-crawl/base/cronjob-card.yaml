@@ -1,30 +1,30 @@
+# Phase 8 — 제휴카드 자동 ingest CronJob
+# 매월 1·11·21일 04:30 KST — 사용자 요구 "월초 1~3회"
+# subsidy CronJob 과 image / secret / 노드 동일, target 만 분기.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: phoneshin-crawl-subsidy
+  name: phoneshin-crawl-card
   labels:
     app: phoneshin-crawl
-    target: subsidy
+    target: card
 spec:
-  # 매주 월/목 04:00 KST — Firecrawl credits 절감을 위해 주 2회로 조정 (Phase 8 결정)
-  # 사용자 메모: "나중에 필요 시 비용을 늘릴 거야"
-  # K8s 1.24+ timeZone 필드 지원
-  schedule: "0 4 * * 1,4"
+  schedule: "30 4 1,11,21 * *"
   timeZone: "Asia/Seoul"
-  concurrencyPolicy: Forbid           # 이전 실행 진행 중이면 신규 스킵
+  concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
-  startingDeadlineSeconds: 3600       # 노드 다운 등으로 1시간 이상 지연 시 skip
+  startingDeadlineSeconds: 3600
   jobTemplate:
     spec:
       backoffLimit: 2
-      activeDeadlineSeconds: 14400    # 4시간 — rate limit 1req/5sec * 1500items 상한
-      ttlSecondsAfterFinished: 604800 # 7일 후 자동 정리
+      activeDeadlineSeconds: 7200       # 2시간 — 카드 페이지 수가 단말보다 적음
+      ttlSecondsAfterFinished: 604800
       template:
         metadata:
           labels:
             app: phoneshin-crawl
-            target: subsidy
+            target: card
         spec:
           restartPolicy: OnFailure
           nodeSelector:
@@ -51,12 +51,10 @@ spec:
                   value: Asia/Seoul
                 - name: DEPLOY_ENV
                   value: prod
-                # Phase 7.5: 어떤 작업을 실행할지 분기.
-                # 옵션: subsidy | card | wireline (현재는 subsidy 만 구현, 나머지는 Phase 8/9)
                 - name: CRAWL_TARGET
-                  value: subsidy
+                  value: card
                 - name: PHONE_API_INGEST_ENDPOINT
-                  value: 'http://phoneshin-api-svc.phoneshin.svc.cluster.local:8080/v1/internal/ingest/subsidy'
+                  value: 'http://phoneshin-api-svc.phoneshin.svc.cluster.local:8080/v1/internal/ingest/card'
                 - name: PHONE_API_AUTH_TOKEN
                   valueFrom:
                     secretKeyRef:
