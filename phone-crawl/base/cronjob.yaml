@@ -26,9 +26,11 @@ spec:
             app: phoneshin-crawl
             target: subsidy
           annotations:
-            # Istio sidecar 가 main 컨테이너 종료 후에도 안 종료되어 Pod 가 NotReady 1/2 로
-            # 머무는 문제 방지. 활성 연결이 0이 되면 envoy 자동 종료.
-            # (Istio 1.12+ ProxyConfig 옵션)
+            # 이 Job 은 단명 batch 작업 — outbound HTTP(Firecrawl/phone-api) 만 호출하고
+            # cluster-internal 통신은 plaintext(`http://phoneshin-api-svc...`) 라 mTLS 불필요.
+            # Sidecar 미주입으로 Pod 가 NotReady 1/2 로 잔존하는 근본 문제 제거.
+            sidecar.istio.io/inject: "false"
+            # 미래에 누가 sidecar 를 다시 켜도 envoy 가 idle 후 자동 종료되도록 fallback 유지.
             proxy.istio.io/config: |
               proxyMetadata:
                 EXIT_ON_ZERO_ACTIVE_CONNECTIONS: "true"
