@@ -25,6 +25,13 @@ spec:
           labels:
             app: phoneshin-crawl
             target: subsidy
+          annotations:
+            # Istio sidecar 가 main 컨테이너 종료 후에도 안 종료되어 Pod 가 NotReady 1/2 로
+            # 머무는 문제 방지. 활성 연결이 0이 되면 envoy 자동 종료.
+            # (Istio 1.12+ ProxyConfig 옵션)
+            proxy.istio.io/config: |
+              proxyMetadata:
+                EXIT_ON_ZERO_ACTIVE_CONNECTIONS: "true"
         spec:
           restartPolicy: OnFailure
           nodeSelector:
