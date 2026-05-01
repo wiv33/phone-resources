@@ -31,7 +31,7 @@ spec:
         kubernetes.io/hostname: backbone-worker
       containers:
         - name: playwright
-          image: ghcr.io/mendableai/playwright-service:latest
+          image: ghcr.io/firecrawl/playwright-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

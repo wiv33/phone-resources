@@ -1,9 +1,10 @@
-# Firecrawl 의 HTTP API 엔드포인트 (POST /v1/scrape, GET /v1/team/credit-usage 등).
+# Firecrawl 의 HTTP API + worker harness (v2 통합).
 # - USE_DB_AUTHENTICATION=false: cluster 내부 호출만이라 DB 기반 API key 검증 비활성.
 # - LLM: Hugging Face Inference Providers (OpenAI-compatible router). 무료 tier — 비용 0.
 #   * BASE_URL=https://router.huggingface.co/v1
 #   * MODEL=meta-llama/Llama-3.3-70B-Instruct
 # - OPENAI_API_KEY: phoneshin-firecrawl-secret 의 openai-api-key — HF token 주입.
+# - 의존성: redis (Bull queue) + rabbitmq (NUQ messaging) + nuq-postgres (NUQ persistence)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,29 +35,59 @@ spec:
         kubernetes.io/hostname: backbone-worker
       containers:
         - name: api
-          image: ghcr.io/mendableai/firecrawl:latest
+          image: ghcr.io/firecrawl/firecrawl:latest
           imagePullPolicy: IfNotPresent
-          command: ["pnpm", "run", "start:production"]
+          # v2 harness — single command 가 api + worker + extract-worker 모두 관리.
+          command: ["node", "dist/src/harness.js", "--start-docker"]
           ports:
             - name: http
               containerPort: 3002
+            - name: extract
+              containerPort: 3004
+            - name: worker
+              containerPort: 3005
           env:
-            - name: PORT
-              value: "3002"
             - name: HOST
               value: "0.0.0.0"
+            - name: PORT
+              value: "3002"
+            - name: INTERNAL_PORT
+              value: "3002"
+            - name: EXTRACT_WORKER_PORT
+              value: "3004"
+            - name: WORKER_PORT
+              value: "3005"
+            - name: ENV
+              value: "local"
             - name: REDIS_URL
               value: "redis://firecrawl-redis:6379"
             - name: REDIS_RATE_LIMIT_URL
               value: "redis://firecrawl-redis:6379"
+            - name: NUQ_RABBITMQ_URL
+              value: "amqp://firecrawl-rabbitmq:5672"
+            - name: POSTGRES_HOST
+              value: "firecrawl-postgres"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "postgres"
             - name: PLAYWRIGHT_MICROSERVICE_URL
               value: "http://firecrawl-playwright:3000/scrape"
             - name: USE_DB_AUTHENTICATION
               value: "false"
             - name: NUM_WORKERS_PER_QUEUE
               value: "4"
+            - name: CRAWL_CONCURRENT_REQUESTS
+              value: "5"
+            - name: MAX_CONCURRENT_JOBS
+              value: "3"
+            - name: BROWSER_POOL_SIZE
+              value: "3"
             # LLM 설정 — Hugging Face Inference Providers (OpenAI-compatible).
-            # phone-crawl 의 jsonOptions.prompt 추출은 instruction-following 만 있으면 충분.
             - name: MODEL_NAME
               value: "meta-llama/Llama-3.3-70B-Instruct"
             - name: MODEL_EMBEDDING_NAME
@@ -68,27 +99,31 @@ spec:
                 secretKeyRef:
                   name: phoneshin-firecrawl-secret
                   key: openai-api-key
-            # Bull Board (큐 모니터링 UI) 비활성 — cluster 내부에서만 사용.
             - name: BULL_AUTH_KEY
               value: "disabled"
+            - name: HARNESS_STARTUP_TIMEOUT_MS
+              value: "120000"
+            - name: LOGGING_LEVEL
+              value: "info"
           resources:
             requests:
-              cpu: "200m"
-              memory: "256Mi"
+              cpu: "300m"
+              memory: "512Mi"
             limits:
-              cpu: "1000m"
-              memory: "1Gi"
+              cpu: "2000m"
+              memory: "2Gi"
           readinessProbe:
             httpGet:
               path: /
               port: 3002
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30
             periodSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /
               port: 3002
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 30
 ---
 apiVersion: v1
