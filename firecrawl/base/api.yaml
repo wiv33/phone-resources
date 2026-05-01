@@ -1,0 +1,106 @@
+# Firecrawl 의 HTTP API 엔드포인트 (POST /v1/scrape, GET /v1/team/credit-usage 등).
+# - USE_DB_AUTHENTICATION=false: cluster 내부 호출만이라 DB 기반 API key 검증 비활성. phone-crawl 의 FIRECRAWL_API_KEY 는 임의값 가능.
+# - MODEL_NAME=gpt-4o-mini: Firecrawl SaaS 와 동일 모델, 비용 1/10 수준.
+# - OPENAI_API_KEY: phoneshin-firecrawl-secret 에서 주입 (별도 kubectl create secret 필요).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firecrawl-api
+  labels:
+    app: firecrawl
+    component: api
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: firecrawl
+      component: api
+  template:
+    metadata:
+      labels:
+        app: firecrawl
+        component: api
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: backbone-worker
+      containers:
+        - name: api
+          image: ghcr.io/mendableai/firecrawl:latest
+          imagePullPolicy: IfNotPresent
+          command: ["pnpm", "run", "start:production"]
+          ports:
+            - name: http
+              containerPort: 3002
+          env:
+            - name: PORT
+              value: "3002"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: REDIS_URL
+              value: "redis://firecrawl-redis:6379"
+            - name: REDIS_RATE_LIMIT_URL
+              value: "redis://firecrawl-redis:6379"
+            - name: PLAYWRIGHT_MICROSERVICE_URL
+              value: "http://firecrawl-playwright:3000/scrape"
+            - name: USE_DB_AUTHENTICATION
+              value: "false"
+            - name: NUM_WORKERS_PER_QUEUE
+              value: "4"
+            # LLM 설정 — gpt-4o-mini 가 SaaS 의 기본 모델 동등.
+            - name: MODEL_NAME
+              value: "gpt-4o-mini"
+            - name: MODEL_EMBEDDING_NAME
+              value: "text-embedding-3-small"
+            - name: OPENAI_BASE_URL
+              value: "https://api.openai.com/v1"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: phoneshin-firecrawl-secret
+                  key: openai-api-key
+            # Bull Board (큐 모니터링 UI) 비활성 — cluster 내부에서만 사용.
+            - name: BULL_AUTH_KEY
+              value: "disabled"
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3002
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3002
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: firecrawl-api
+  labels:
+    app: firecrawl
+    component: api
+spec:
+  selector:
+    app: firecrawl
+    component: api
+  ports:
+    - name: http
+      port: 3002
+      targetPort: 3002
+  type: ClusterIP

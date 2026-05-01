@@ -1,0 +1,13 @@
+namespace: phoneshin
+commonLabels:
+  app: firecrawl
+  env: prod
+resources:
+  - ../../base
+# image tag 는 latest 유지 — 자체 빌드 image 가 아니라 mendableai 공개 이미지.
+# 안정화 후 특정 sha 로 pin 하려면 아래처럼 추가:
+# images:
+#   - name: ghcr.io/mendableai/firecrawl
+#     newTag: v1.x.x
+#   - name: ghcr.io/mendableai/playwright-service
+#     newTag: v1.x.x

@@ -71,11 +71,12 @@ spec:
                     secretKeyRef:
                       name: phoneshin-crawl-secret
                       key: phone-api-auth-token
+                # Self-hosted Firecrawl — phone-resources/firecrawl 에서 배포.
+                # USE_DB_AUTHENTICATION=false 라 API key 검증 없음 → 임의값.
+                - name: FIRECRAWL_BASE_URL
+                  value: 'http://firecrawl-api.phoneshin.svc.cluster.local:3002'
                 - name: FIRECRAWL_API_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: phoneshin-crawl-secret
-                      key: firecrawl-api-key
+                  value: 'self-hosted-no-auth'
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:

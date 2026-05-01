@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  app: firecrawl
+resources:
+  - redis.yaml
+  - playwright.yaml
+  - api.yaml
+  - worker.yaml
+# secret 은 ArgoCD 관리 X — public repo 라 placeholder 만 두는 위험 회피.
+# 운영 적용은 kubectl create secret 으로 별도 관리:
+#   kubectl create secret generic phoneshin-firecrawl-secret \
+#     --from-literal=openai-api-key=<OPENAI_API_KEY> \
+#     -n phoneshin --dry-run=client -o yaml | kubectl apply -f -
+#
+# Service 엔드포인트 (cluster 내부):
+#   http://firecrawl-api.phoneshin.svc.cluster.local:3002
+# phone-crawl CronJob 의 FIRECRAWL_BASE_URL 환경변수에 위 URL 주입.
