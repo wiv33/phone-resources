@@ -2,7 +2,7 @@
 # - USE_DB_AUTHENTICATION=false: cluster 내부 호출만이라 DB 기반 API key 검증 비활성.
 # - LLM: Hugging Face Inference Providers (OpenAI-compatible router). 무료 tier — 비용 0.
 #   * BASE_URL=https://router.huggingface.co/v1
-#   * MODEL=meta-llama/Llama-3.3-70B-Instruct
+#   * MODEL=openai/gpt-oss-120b (Groq provider, json_schema response format 지원)
 # - OPENAI_API_KEY: phoneshin-firecrawl-secret 의 openai-api-key — HF token 주입.
 # - 의존성: redis (Bull queue) + rabbitmq (NUQ messaging) + nuq-postgres (NUQ persistence)
 apiVersion: apps/v1
@@ -88,8 +88,10 @@ spec:
             - name: BROWSER_POOL_SIZE
               value: "3"
             # LLM 설정 — Hugging Face Inference Providers (OpenAI-compatible).
+            # Firecrawl v2 가 json_schema response format 사용 → structured output 지원 모델 필수.
+            # gpt-oss-120b: HF Router → Groq provider 경로, structured output 지원 + 무료 tier.
             - name: MODEL_NAME
-              value: "meta-llama/Llama-3.3-70B-Instruct"
+              value: "openai/gpt-oss-120b"
             - name: MODEL_EMBEDDING_NAME
               value: "sentence-transformers/all-MiniLM-L6-v2"
             - name: OPENAI_BASE_URL
