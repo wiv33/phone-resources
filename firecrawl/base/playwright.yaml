@@ -48,15 +48,14 @@ spec:
             limits:
               cpu: "1500m"
               memory: "1536Mi"
+          # playwright-service 는 /health 엔드포인트가 없음 — TCP probe 로 충분.
           readinessProbe:
-            httpGet:
-              path: /health/readiness
+            tcpSocket:
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
-            httpGet:
-              path: /health/liveness
+            tcpSocket:
               port: 3000
             initialDelaySeconds: 30
             periodSeconds: 30
