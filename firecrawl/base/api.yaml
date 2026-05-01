@@ -1,7 +1,9 @@
 # Firecrawl 의 HTTP API 엔드포인트 (POST /v1/scrape, GET /v1/team/credit-usage 등).
-# - USE_DB_AUTHENTICATION=false: cluster 내부 호출만이라 DB 기반 API key 검증 비활성. phone-crawl 의 FIRECRAWL_API_KEY 는 임의값 가능.
-# - MODEL_NAME=gpt-4o-mini: Firecrawl SaaS 와 동일 모델, 비용 1/10 수준.
-# - OPENAI_API_KEY: phoneshin-firecrawl-secret 에서 주입 (별도 kubectl create secret 필요).
+# - USE_DB_AUTHENTICATION=false: cluster 내부 호출만이라 DB 기반 API key 검증 비활성.
+# - LLM: Hugging Face Inference Providers (OpenAI-compatible router). 무료 tier — 비용 0.
+#   * BASE_URL=https://router.huggingface.co/v1
+#   * MODEL=meta-llama/Llama-3.3-70B-Instruct
+# - OPENAI_API_KEY: phoneshin-firecrawl-secret 의 openai-api-key — HF token 주입.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -53,13 +55,14 @@ spec:
               value: "false"
             - name: NUM_WORKERS_PER_QUEUE
               value: "4"
-            # LLM 설정 — gpt-4o-mini 가 SaaS 의 기본 모델 동등.
+            # LLM 설정 — Hugging Face Inference Providers (OpenAI-compatible).
+            # phone-crawl 의 jsonOptions.prompt 추출은 instruction-following 만 있으면 충분.
             - name: MODEL_NAME
-              value: "gpt-4o-mini"
+              value: "meta-llama/Llama-3.3-70B-Instruct"
             - name: MODEL_EMBEDDING_NAME
-              value: "text-embedding-3-small"
+              value: "sentence-transformers/all-MiniLM-L6-v2"
             - name: OPENAI_BASE_URL
-              value: "https://api.openai.com/v1"
+              value: "https://router.huggingface.co/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:

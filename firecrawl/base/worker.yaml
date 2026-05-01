@@ -49,11 +49,11 @@ spec:
             - name: NUM_WORKERS_PER_QUEUE
               value: "4"
             - name: MODEL_NAME
-              value: "gpt-4o-mini"
+              value: "meta-llama/Llama-3.3-70B-Instruct"
             - name: MODEL_EMBEDDING_NAME
-              value: "text-embedding-3-small"
+              value: "sentence-transformers/all-MiniLM-L6-v2"
             - name: OPENAI_BASE_URL
-              value: "https://api.openai.com/v1"
+              value: "https://router.huggingface.co/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
