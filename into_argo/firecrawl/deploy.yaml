@@ -6,7 +6,7 @@ metadata:
 spec:
   destination:
     name: ''
-    namespace: phoneshin
+    namespace: firecrawl
     server: 'https://kubernetes.default.svc'
   source:
     path: firecrawl/overlay/prod
@@ -17,6 +17,8 @@ spec:
   sources: []
   project: default
   syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
     automated:
       prune: true
       selfHeal: true

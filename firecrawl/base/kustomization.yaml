@@ -14,6 +14,7 @@ resources:
 #     --from-literal=openai-api-key=<HF_TOKEN_OR_OPENAI_KEY> \
 #     -n phoneshin --dry-run=client -o yaml | kubectl apply -f -
 #
-# Service 엔드포인트 (cluster 내부):
-#   http://firecrawl-api.phoneshin.svc.cluster.local:3002
+# Service 엔드포인트 (cluster 내부 — 별도 firecrawl namespace):
+#   http://firecrawl-api.firecrawl.svc.cluster.local:3002
 # phone-crawl CronJob 의 FIRECRAWL_BASE_URL 환경변수에 위 URL 주입.
+# secret 도 firecrawl namespace 에 생성 필요 (-n firecrawl).

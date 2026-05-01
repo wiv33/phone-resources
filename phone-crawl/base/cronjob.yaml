@@ -74,7 +74,7 @@ spec:
                 # Self-hosted Firecrawl — phone-resources/firecrawl 에서 배포.
                 # USE_DB_AUTHENTICATION=false 라 API key 검증 없음 → 임의값.
                 - name: FIRECRAWL_BASE_URL
-                  value: 'http://firecrawl-api.phoneshin.svc.cluster.local:3002'
+                  value: 'http://firecrawl-api.firecrawl.svc.cluster.local:3002'
                 - name: FIRECRAWL_API_KEY
                   value: 'self-hosted-no-auth'
                 - name: SLACK_WEBHOOK_URL

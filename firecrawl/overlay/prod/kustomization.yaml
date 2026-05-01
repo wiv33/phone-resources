@@ -1,4 +1,4 @@
-namespace: phoneshin
+namespace: firecrawl
 commonLabels:
   app: firecrawl
   env: prod
