@@ -11,6 +11,10 @@ metadata:
 spec:
   schedule: "0 5 1 * *"
   timeZone: "Asia/Seoul"
+  # 1차 검증(2026-05-02): 3 carrier 모두 SPA 카테고리 UI — 단순 scrape 로 plan rows 미노출.
+  # actions(click/wait) 추가 또는 개별 plan 페이지 (e.g. m.tworld.co.kr/product/callplan?prod_id=...)
+  # 2단계 crawl 패턴 도입 후 unsuspend. suspend=true 동안에도 manual job 으로 테스트 가능.
+  suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
