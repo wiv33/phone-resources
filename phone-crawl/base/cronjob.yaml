@@ -77,6 +77,18 @@ spec:
                   value: 'http://firecrawl-api.firecrawl.svc.cluster.local:3002'
                 - name: FIRECRAWL_API_KEY
                   value: 'self-hosted-no-auth'
+                # Phase 12: paginator 사이드카 + LLM 직접 호출 (HF Router)
+                - name: PAGINATOR_BASE_URL
+                  value: 'http://firecrawl-paginator.firecrawl.svc.cluster.local:3001'
+                - name: LLM_BASE_URL
+                  value: 'https://router.huggingface.co/v1'
+                - name: LLM_MODEL_NAME
+                  value: 'openai/gpt-oss-120b'
+                - name: LLM_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: phoneshin-crawl-secret
+                      key: hf-token
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:

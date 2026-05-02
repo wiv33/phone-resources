@@ -6,8 +6,9 @@ resources:
   - redis.yaml         # Bull queue + rate limit
   - rabbitmq.yaml      # NUQ messaging (v2)
   - postgres.yaml      # NUQ persistence (v2)
-  - playwright.yaml    # headless browser 렌더링
+  - playwright.yaml    # headless browser 렌더링 (Firecrawl 의존)
   - api.yaml           # api + worker harness 통합 (v2)
+  - paginator.yaml     # SPA 페이지네이션 사이드카 (Phase 11+)
 # secret 은 ArgoCD 관리 X — public repo 라 placeholder 만 두는 위험 회피.
 # 운영 적용은 kubectl create secret 으로 별도 관리:
 #   kubectl create secret generic phoneshin-firecrawl-secret \
