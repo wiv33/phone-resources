@@ -77,18 +77,20 @@ spec:
                   value: 'http://firecrawl-api.firecrawl.svc.cluster.local:3002'
                 - name: FIRECRAWL_API_KEY
                   value: 'self-hosted-no-auth'
-                # Phase 12: paginator 사이드카 + LLM 직접 호출 (HF Router)
+                # Phase 12: paginator 사이드카 + LLM 직접 호출 (OpenAI gpt-4o-mini)
+                #   초기에는 HF Router gpt-oss-120b 였으나 무료 tier 토큰 한도(KT/LGU 24K chars)
+                #   초과로 402 발생 → OpenAI 로 전환 (~$0.50/월 예상).
                 - name: PAGINATOR_BASE_URL
                   value: 'http://firecrawl-paginator.firecrawl.svc.cluster.local:3001'
                 - name: LLM_BASE_URL
-                  value: 'https://router.huggingface.co/v1'
+                  value: 'https://api.openai.com/v1'
                 - name: LLM_MODEL_NAME
-                  value: 'openai/gpt-oss-120b'
+                  value: 'gpt-4o-mini'
                 - name: LLM_API_KEY
                   valueFrom:
                     secretKeyRef:
                       name: phoneshin-crawl-secret
-                      key: hf-token
+                      key: openai-api-key
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
