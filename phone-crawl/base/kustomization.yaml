@@ -2,8 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 commonLabels:
   app: phoneshin-crawl
-resources: []
-# Phase 13 (2026-05-04): 전체 reset.
-# 새 SmartChoice 기반 cronjob 추가 예정 (수정 후 본 resources 에 등록).
+resources:
+  - cronjob-subsidy.yaml
+
+# Phase 13 (2026-05-04) — SmartChoice 기반 보조금 크롤러 단일 cronjob 으로 재출발.
 # secret: kubectl create secret generic phoneshin-crawl-secret \
-#   --from-literal=phone-api-auth-token=<INTERNAL_TOKEN> -n phoneshin
+#   --from-literal=phone-api-auth-token=<INTERNAL_TOKEN> \
+#   --from-literal=slack-webhook-url=<OPTIONAL_SLACK_URL> \
+#   -n phoneshin

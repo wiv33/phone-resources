@@ -1,0 +1,59 @@
+# Phase 13 (2026-05-04) — SmartChoice 보조금 크롤러
+#
+# 매주 월/목 03:00 KST (= UTC 18:00 일/수) 실행.
+# SmartChoice (smartchoice.or.kr) 에서 3사 × 단말기 × 7요금제 보조금 매트릭스를 수집하여
+# phone-api 의 /v1/internal/ingest/subsidy 로 ingest.
+#
+# 시크릿: kubectl create secret generic phoneshin-crawl-secret \
+#   --from-literal=phone-api-auth-token=<INTERNAL_TOKEN> -n phoneshin
+#
+# CLI 모드 (web-application-type: none) — Spring Boot 가 ApplicationRunner 종료 후 자동 exit.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: phoneshin-crawl-subsidy
+spec:
+  # 월/목 18:00 UTC = KST 03:00
+  schedule: "0 18 * * 0,3"
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid                # 이전 실행이 진행 중이면 skip
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600          # 1시간 hard cap
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: phoneshin-crawl
+              image: registry-harbor.phoneshin.com/phoneshin/crawl:latest
+              imagePullPolicy: IfNotPresent
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 768Mi
+              env:
+                - name: TZ
+                  value: Asia/Seoul
+                - name: SPRING_PROFILES_ACTIVE
+                  value: prod
+                - name: SMARTCHOICE_BASE_URL
+                  value: https://www.smartchoice.or.kr
+                - name: PHONE_API_INGEST_ENDPOINT
+                  value: http://phone-api.phoneshin.svc.cluster.local:8080/v1/internal/ingest/subsidy
+                - name: PHONE_API_AUTH_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: phoneshin-crawl-secret
+                      key: phone-api-auth-token
+                - name: SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: phoneshin-crawl-secret
+                      key: slack-webhook-url
+                      optional: true
