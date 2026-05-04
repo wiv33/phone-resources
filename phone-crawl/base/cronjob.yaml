@@ -77,19 +77,18 @@ spec:
                   value: 'http://firecrawl-api.firecrawl.svc.cluster.local:3002'
                 - name: FIRECRAWL_API_KEY
                   value: 'self-hosted-no-auth'
-                # Phase 12: paginator 사이드카 + LLM 직접 호출 (Groq openai/gpt-oss-120b)
-                #   - 무료 tier 30,000 tokens/min — llama-3.3-70b(6000 TPM) 의 5x
-                #     → 3 carrier 순차 호출 시 TPM 한도 초과로 413 발생 회피
-                #   - 131K context — 합본 텍스트 (24K chars) 충분히 커버
-                #   - OpenAI-compatible 엔드포인트 (BASE_URL + 모델명만 교체)
-                #   - 한국 카드 OpenAI 결제 불가 사례 우회 (2026-05-04 진단)
-                #   - secret 키 이름은 'openai-api-key' 유지 (env 변수명 호환)
+                # Phase 12: paginator 사이드카 + LLM 직접 호출 (Groq llama-4-scout)
+                #   진단 결과 (2026-05-04):
+                #     - openai/gpt-oss-120b free tier TPM=8K → 페이지 분할 호출도 부족
+                #     - meta-llama/llama-4-scout free tier TPM=30K + 131K context → 충분
+                #   OpenAI-compatible 엔드포인트, 한국 카드 OpenAI 결제 우회.
+                #   secret 키 이름은 'openai-api-key' 유지 (env 변수명 호환).
                 - name: PAGINATOR_BASE_URL
                   value: 'http://firecrawl-paginator.firecrawl.svc.cluster.local:3001'
                 - name: LLM_BASE_URL
                   value: 'https://api.groq.com/openai/v1'
                 - name: LLM_MODEL_NAME
-                  value: 'openai/gpt-oss-120b'
+                  value: 'meta-llama/llama-4-scout-17b-16e-instruct'
                 - name: LLM_API_KEY
                   valueFrom:
                     secretKeyRef:
