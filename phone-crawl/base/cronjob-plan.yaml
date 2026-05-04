@@ -11,10 +11,8 @@ metadata:
 spec:
   schedule: "0 5 1 * *"
   timeZone: "Asia/Seoul"
-  # 1차 검증(2026-05-02): 3 carrier 모두 SPA 카테고리 UI — 단순 scrape 로 plan rows 미노출.
-  # actions(click/wait) 추가 또는 개별 plan 페이지 (e.g. m.tworld.co.kr/product/callplan?prod_id=...)
-  # 2단계 crawl 패턴 도입 후 unsuspend. suspend=true 동안에도 manual job 으로 테스트 가능.
-  suspend: true
+  # Phase 12-A (2026-05-04): paginator(Playwright) 도입 후 SPA 카테고리 UI 정상 렌더 → unsuspend.
+  # 3 carrier plan adapter 가 PaginatorClient + LlmExtractClient 사용으로 전환됨.
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
@@ -76,6 +74,18 @@ spec:
                   value: 'http://firecrawl-api.firecrawl.svc.cluster.local:3002'
                 - name: FIRECRAWL_API_KEY
                   value: 'self-hosted-no-auth'
+                # Phase 12-A: paginator + LLM 직접 호출 (subsidy 와 동일)
+                - name: PAGINATOR_BASE_URL
+                  value: 'http://firecrawl-paginator.firecrawl.svc.cluster.local:3001'
+                - name: LLM_BASE_URL
+                  value: 'https://api.groq.com/openai/v1'
+                - name: LLM_MODEL_NAME
+                  value: 'meta-llama/llama-4-scout-17b-16e-instruct'
+                - name: LLM_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: phoneshin-crawl-secret
+                      key: openai-api-key
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
