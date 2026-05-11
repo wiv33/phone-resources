@@ -26,6 +26,10 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
+          # harbor private registry 인증 — phoneshin-api Pod 와 동일 secret 사용.
+          # 누락 시 ImagePullBackOff (registry-harbor.phoneshin.com 접근 거부).
+          imagePullSecrets:
+            - name: inner-harbor-registry
           containers:
             - name: phoneshin-crawl
               image: registry-harbor.phoneshin.com/phoneshin/crawl:latest
