@@ -1,0 +1,26 @@
+# PhoneShin PostgreSQL — bitnami chart 의 nano preset override
+#
+# 배경: 2026-05-12 PG pod 가 OOMKilled (exitCode 137) 로 4시간 사이 3회 재기동.
+# 원인: chart 기본 resourcesPreset=nano → memory limit 192Mi.
+# 운영 DB 의 매일 subsidy/wired_plan UPSERT (~5000 row + WAL/락) 부담을 못 견뎠다.
+#
+# 본 values 는 그 시점에 적용한 resources override 만 박제 (전체 values 가 아님).
+# 다른 설정은 helm 의 reuse-values 로 보존.
+#
+# 적용 방법 (README.md 참조):
+#   helm upgrade postgresql bitnami/postgresql \
+#     -n database --version 15.2.8 \
+#     --reuse-values -f values.yaml
+
+primary:
+  # preset 끄고 resources 명시값 사용
+  resourcesPreset: none
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+      ephemeral-storage: 200Mi
+    limits:
+      cpu: 1500m
+      memory: 2Gi
+      ephemeral-storage: 2Gi
