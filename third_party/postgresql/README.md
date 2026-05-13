@@ -51,7 +51,37 @@ KUBECONFIG=~/.kube/shin_config kubectl get pod postgresql-0 -n database
 PGPASSWORD='<pwd>' psql -h phoneshin.com -p 55432 -U shin -d shin -c "SELECT NOW();"
 ```
 
-## 알려진 위험
+## 다른 PG 인스턴스 — 동일 fix 적용 (2026-05-13)
 
-- harbor / keycloak / dabeeo 의 PG 도 같은 nano preset 일 가능성 — 동일 OOM 위험. 별도 점검 권장.
+PhoneShin 외에도 cluster 내 다른 PG 들이 같은 nano preset (192Mi limit) 운영 중이었음. 동일 OOM 위험 발견 후 일괄 patch.
+
+| namespace | release | 변경 전 | 변경 후 | 방식 |
+|---|---|---|---|---|
+| `harbor` | harbor (sub-chart `postgresql-15.5.24`) | 192Mi/150m | **2Gi/1500m** | `kubectl patch sts` (부모 chart sub-chart 라 helm direct override 위험) |
+| `keycloak` | keycloak (sub-chart `postgresql-15.5.23`) | 192Mi/150m | **2Gi/1500m** | 동일 |
+| `default/postgresql-dabeeo` | (외부) | 6Gi 이미 충분 | 변경 없음 | — |
+
+### patch 명령 (재현용)
+
+```bash
+for ns in harbor keycloak; do
+  KUBECONFIG=~/.kube/shin_config kubectl patch sts ${ns}-postgresql -n $ns --type='json' -p='[
+    {"op":"replace","path":"/spec/template/spec/containers/0/resources","value":{
+      "requests":{"cpu":"500m","memory":"1Gi","ephemeral-storage":"50Mi"},
+      "limits":{"cpu":"1500m","memory":"2Gi","ephemeral-storage":"2Gi"}
+    }}
+  ]'
+  KUBECONFIG=~/.kube/shin_config kubectl rollout restart sts ${ns}-postgresql -n $ns
+done
+```
+
+### 위험 — helm upgrade 시 reset
+
+harbor / keycloak 의 PG 는 부모 chart 의 sub-chart 형태라 `helm upgrade harbor` 또는 `helm upgrade keycloak` 실행 시 patch 가 reset 될 수 있다. 부모 chart upgrade 직후 patch 재적용 필요.
+
+근본 해결: 부모 chart 의 values 에 sub-chart override (`postgresql.primary.resources`) 추가. 단 chart 마다 키 경로가 다르므로 helm show values 로 확인 후 적용 권장.
+
+## 알려진 위험 (잔존)
+
+- harbor / keycloak chart 의 helm upgrade 시 STS patch reset 가능 — 다음 helm upgrade 후 재확인 필요.
 - values.yaml 이 chart 의 일부 설정만 담고 있다. `helm install` 신규 시 `--reuse-values` 가 동작 안 함 — release 가 이미 있을 때만 사용. 신규 install 은 별도 secret/auth 설정 필요.
