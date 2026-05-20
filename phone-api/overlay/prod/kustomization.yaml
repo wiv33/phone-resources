@@ -20,4 +20,4 @@ patches:
 images:
   - name: 'registry-harbor.phoneshin.com/phoneshin/api'
     newName: 'registry-harbor.phoneshin.com/phoneshin/api'
-    newTag: aa416e84971cb09df7a9c15b9512ae556128f342
+    newTag: b9b0cab21e442fe0a08f3475faa96b4258a0a6d4
