@@ -26,6 +26,13 @@ spec:
       backoffLimit: 1
       activeDeadlineSeconds: 3600          # 1시간 hard cap
       template:
+        metadata:
+          annotations:
+            # istio 사이드카 미주입 — 배치 Job 은 메시 불필요(외부 SmartChoice + in-cluster phoneshin-api 호출뿐,
+            # STRICT mTLS PeerAuthentication 없음 → 평문 호출 허용). 사이드카가 있으면 메인 컨테이너가
+            # exit0 로 끝나도 istio-proxy 가 종료되지 않아 Job 이 activeDeadlineSeconds(1h) 까지 매달리다
+            # DeadlineExceeded 로 "실패" 표시된다(데이터는 정상 적재). 주입 제거 시 Job 이 정상 Completed.
+            sidecar.istio.io/inject: "false"
         spec:
           restartPolicy: OnFailure
           # harbor private registry 인증 — phoneshin-api Pod 와 동일 secret 사용.
