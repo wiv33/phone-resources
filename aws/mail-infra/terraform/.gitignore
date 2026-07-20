@@ -1,0 +1,8 @@
+# provider 바이너리/작업 디렉토리 (init 이 재생성)
+.terraform/
+# 로컬 상태 잔재 방지 (상태는 S3 백엔드)
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+# .terraform.lock.hcl 은 커밋한다 (provider 버전 고정)
