@@ -45,7 +45,7 @@ SQS phoneshin-mail-ingest ──(1) MailSqsBridge──▶ Kafka local.api.custo
 - phone-api 다중 replica 는 문제 없음 (SQS 는 competing-consumer 안전, ShedLock 불필요).
 
 ### S3 (메일 원문 읽기)
-- 기존 `S3Adapter` 는 presign URL 전용 + 계정 자격증명이 `aws.access-key`(하드코딩, 별건 보안과제로 분리됨). **재사용하지 말고** `aws.mail.*` 네임스페이스로 신규 어댑터:
+- 기존 `S3Adapter` 는 presign URL 생성 전용이라 용도가 다름. **재사용하지 말고** 최소권한 메일 전용 자격증명(`phone-api-mail-consumer`)을 쓰는 `aws.mail.*` 네임스페이스 신규 어댑터:
   ```yaml
   aws:
     mail:                                # application.yml 에 추가
