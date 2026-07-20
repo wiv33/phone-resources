@@ -7,10 +7,12 @@ resource "aws_sqs_queue" "mail_ingest_dlq" {
 }
 
 resource "aws_sqs_queue" "mail_ingest" {
-  name                       = "phoneshin-mail-ingest"
-  message_retention_seconds  = 1209600 # 14d
-  visibility_timeout_seconds = 60      # 브리지는 Kafka 재발행만 하므로 짧게
-  receive_wait_time_seconds  = 20      # long polling
+  name                      = "phoneshin-mail-ingest"
+  message_retention_seconds = 1209600 # 14d
+  # Kafka 프로듀서 delivery.timeout.ms(기본 120s) 를 넉넉히 초과해야
+  # in-flight send 도중 메시지가 가시화되어 중복 발행/조기 DLQ 되지 않는다.
+  visibility_timeout_seconds = 300
+  receive_wait_time_seconds  = 20 # long polling
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.mail_ingest_dlq.arn

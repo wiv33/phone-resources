@@ -1,7 +1,20 @@
 # phone-api 백엔드 구현 핸드오프 — 계약서 메일 인제스트
 
-> 선행: 이 디렉토리의 AWS 인프라 (완료, `README.md` 참조). 이 문서는 phone-api 저장소 정찰
-> (2026-07-20, 파일 단위 실측) 기반으로 작성됨 — 아래 경로·패턴은 전부 실제 코드에서 확인한 것.
+> 선행: 이 디렉토리의 AWS 인프라 (완료, `README.md` 참조).
+> **구현 완료(2026-07-20)** — phone-api `mail/` 패키지로 구현·테스트·적대적 리뷰(26 에이전트)·수정까지 마침.
+> 아래는 설계 근거와 배포 시 필요한 사항. 코드는 phone-api repo `src/main/kotlin/.../mail/`.
+
+## 구현 상태 (2026-07-20)
+
+- `mail/` 패키지: 도메인/포트/핸들러/파서/SQS브리지/Kafka컨슈머/웹라우터/영속성 — 완료
+- 테스트 21개 통과 (직렬화 계약 5 + 핸들러 파이프라인 10 + 라우터 6)
+- 멀티에이전트 리뷰 확정 결함 전부 반영: **테넌트 격리**(회사 스코프 조회), **SPF 게이트**(DKIM 단독 불충분),
+  **offset earliest**(첫 배포 백로그 유실 방지), **성공 시에만 ack**(종료 중 in-flight 유실 방지),
+  **오류 분류**(일시장애는 재시도, poison만 skip), **S3 버킷 검증**, **조건부 confirm**(경쟁 방지),
+  **인라인 이미지 제외**·다중첨부 거절·필드 절단·FAILED 재처리.
+- ⚠️ **배포 필수 조건** — `MAIL_INGEST_BRIDGE_ENABLED`·`MAIL_INGEST_CONSUMER_ENABLED` **둘 다 기본 false**
+  (환경 공용 큐/토픽이라 비-prod 파드가 운영 메일을 가로채는 것 방지). **prod 오버레이에서 둘 다 true 로 설정해야
+  기능이 동작**한다. 아래 "배포" 절 참조.
 
 ## 목표
 
@@ -110,16 +123,19 @@ ALTER TABLE mail_sender OWNER TO shin;
 ALTER TABLE mail_ingest OWNER TO shin;
 ```
 
-### 처리 흐름 상세 (MailIngestHandler)
-1. `ses_message_id` 존재 → 즉시 성공 반환 (멱등).
-2. verdict 5종 중 하나라도 != PASS → status `REJECTED` (reject_reason 에 어떤 verdict 인지).
-3. `mail.source` 를 `mail_sender`(enabled) 에서 조회 실패 → `REJECTED` (unknown sender). 성공 → staff_id + `store_staff(is_default=true)` 로 store_id.
-4. 수신 주소 localpart != `customer` → `REJECTED` (다른 자동화 주소를 위한 여지).
-5. S3 GetObject → MIME 파싱 → PDF 파트 0건이면 `REJECTED`; 여러 건이면 각각 OCR (mail_ingest 는 메일 단위 1행, ocr_fields 는 첨부별 배열도 허용 — 구현 시 결정).
-6. ContractOcrPort → 성공 `EXTRACTED` / 실패 `FAILED` (error 기록). Claude 호출엔 `.timeout()`.
+### 처리 흐름 상세 (MailIngestHandler — 구현된 순서)
+1. `ses_message_id` 존재 → `FAILED` 면 재처리(같은 id UPDATE, 일시장애 복구), 그 외 상태는 멱등 반환.
+2. **verdict** — spam/virus/**spf** != PASS → `REJECTED`. DKIM 은 게이트 아님(서명 도메인이 봉투 발신자와 달라 단독으론 신원 불충분; allowlist 를 `mail.source` 로 매칭하므로 SPF 필수).
+3. **S3 버킷 검증** — `action.bucketName` != `aws.mail.s3-bucket` → `REJECTED` (위조 Kafka 메시지의 임의 버킷 읽기 차단).
+4. **수신 주소** — 로컬파트(`customer`) **AND** 도메인(`bot.phoneshin.com`) 모두 일치해야 통과.
+5. **발신자 allowlist** — `mail.source` 를 `mail_sender`(enabled)에서 조회. 실패 → `REJECTED`. 성공 → staff→**company_id**(테넌트 키)+store_id(`store_staff.is_default`).
+6. **S3 원문** — HeadObject 크기 캡(45MB) → GetObject → MIME 파싱. 인라인 이미지 제외. PDF 우선(동봉 이미지 무시), PDF 없으면 단일 이미지. **PDF·이미지 각각 2개 이상 → `REJECTED`**(한 통에 한 계약), 20MB 초과 → `REJECTED`.
+7. **OCR** — `ContractOcrPort`(`.timeout()`) → 성공 `EXTRACTED`(confidence 는 {high,medium,low} 정규화) / 실패 `FAILED`.
+- 실패/거절 어느 단계든 `mail_ingest` 행은 남는다. reject_reason 은 255자 절단.
 
-### 웹 API (FE 검토 화면용)
-- `MailIngestRouter` (@WebAdapter): `GET /v1/mail-ingest?status=EXTRACTED` 목록 / `GET /v1/mail-ingest/{id}` 상세(+원문 PDF presign 은 mail 버킷용 어댑터에 presign 추가 시) / `PATCH /v1/mail-ingest/{id}/confirm {customerId}`.
+### 웹 API (FE 검토 화면용) — **모두 회사 스코프(PHONE-COMPANY-ID)**
+- `MailIngestRouter` (@WebAdapter): `GET /v1/mail-ingest?status=EXTRACTED` 목록 / `GET /v1/mail-ingest/{id}` 상세 / `PATCH /v1/mail-ingest/{id}/confirm {customerId}`.
+- **테넌트 격리**: 모든 조회·확정이 호출자 회사로 필터됨(타 회사 계약서 PII 차단). confirm 은 `EXTRACTED AND company 일치`일 때만 조건부 UPDATE(동시 확정 경쟁 안전), 불일치=404/상태오류=409.
 - Customer 생성은 **기존 `POST /v1/customer`** 를 FE 가 그대로 사용. OCR 이 못 채우는 **필수** 필드: `joinInfo.salesStoreId`(store_id 로 프리필 가능), `joinInfo.agencyId`, `wirelessInfo.rebateNet` — 사람이 채워야 하는 이유이자 자동생성 금지의 근거 (CustomerValidator.kt 실측).
 
 ### 테스트 (기존 스타일)
@@ -127,9 +143,31 @@ ALTER TABLE mail_ingest OWNER TO shin;
 - 핸들러: `CreditAlertHandlerTest.kt` 스타일 — 포트 mock + `StepVerifier`.
 - **SES 알림 JSON 직렬화 계약 테스트 필수** (`CreditAlertEventSerializationTest` 선례): 실제 SQS 메시지를 fixture 로 고정 → KotlinModule 사고 재발 방지. fixture 는 이 인프라의 E2E 테스트에서 확보 가능 (README 런북).
 
-### 배포 (phone-resources)
-- `phone-api/overlay/prod/deploy.yaml` env 추가: `AWS_MAIL_ACCESS_KEY`/`AWS_MAIL_SECRET_KEY` 는 `secretKeyRef: phone-api-mail-aws` (`PHONE_API_INTERNAL_AUTH_TOKEN` 의 secretKeyRef 선례), `AWS_MAIL_SQS_QUEUE_URL`/`AWS_MAIL_S3_BUCKET`/`MAIL_INGEST_BRIDGE_ENABLED=true` 는 literal value (MESSAGING_* 선례). Secret 은 `10-issue-credentials.sh` 가 생성 (VPN 필요, 실행 대기 중).
-- 값: README.md 의 "phone-api 소비자 계약" 절 참조.
+### 배포 (phone-resources) — prod 오버레이 env 추가 (기능 활성화의 유일한 스위치)
+`phone-api/overlay/prod/deploy.yaml` 의 env 에 아래를 추가한다. **Secret(`phone-api-mail-aws`) 을 먼저 만든 뒤**
+(`10-issue-credentials.sh`, VPN 필요) secretKeyRef 를 넣어야 파드가 뜬다 — 없는 Secret 참조는 기동 실패.
+
+```yaml
+# 활성화 스위치 (둘 다 없으면 기능 off — 기본값이 false)
+- name: MAIL_INGEST_BRIDGE_ENABLED
+  value: "true"
+- name: MAIL_INGEST_CONSUMER_ENABLED
+  value: "true"
+# 비-secret 설정 (MESSAGING_* 처럼 literal)
+- name: AWS_MAIL_SQS_QUEUE_URL
+  value: "https://sqs.ap-northeast-2.amazonaws.com/211125461385/phoneshin-mail-ingest"
+- name: AWS_MAIL_S3_BUCKET
+  value: "phoneshin-mail-inbox-211125461385"
+- name: AWS_MAIL_REGION
+  value: "ap-northeast-2"
+# 자격증명 (PHONE_API_INTERNAL_AUTH_TOKEN 의 secretKeyRef 선례)
+- name: AWS_MAIL_ACCESS_KEY
+  valueFrom: { secretKeyRef: { name: phone-api-mail-aws, key: AWS_ACCESS_KEY_ID } }
+- name: AWS_MAIL_SECRET_KEY
+  valueFrom: { secretKeyRef: { name: phone-api-mail-aws, key: AWS_SECRET_ACCESS_KEY } }
+```
+- 그 외 튜닝(선택): `MAIL_INGEST_RECIPIENT_DOMAIN`(기본 bot.phoneshin.com), `MAIL_INGEST_OCR_TIMEOUT_SECONDS`(120).
+- **`CLAUDE_API_KEY` 확인** — OCR(ContractOcrPort)이 이 키로 동작. prod 파드에 실제 설정돼 있는지 배포 전 확인.
 
 ### 마무리 체크리스트
 - [ ] `docs/feature-impact-map.md` 갱신 (라우터/마이그레이션 추가 시 필수 — 루트 CLAUDE.md 규칙)
