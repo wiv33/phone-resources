@@ -1,0 +1,87 @@
+# Ollama — 계약서 OCR 로컬 추론 (Qwen3-VL-8B, CPU)
+# 대상 노드: backbone-worker (32vCPU/252GiB, GPU 없음 → CPU 추론)
+# 용도: ClaudeVisionAdapter(ContractOcrPort) 대체 후보 — 섀도 모드 비교 후 전환 판단
+# 모델 pull: kubectl -n ollama exec deploy/ollama -- ollama pull qwen3-vl:8b
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ollama
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models
+  namespace: ollama
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 30Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ollama
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # RWO PVC + 단일 모델 서버
+  selector:
+    matchLabels: { app: ollama }
+  template:
+    metadata:
+      labels: { app: ollama }
+      annotations:
+        sidecar.istio.io/inject: "false"   # LLM 스트리밍에 사이드카 불필요 + crawl Job 전례(사이드카 미종료)
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: backbone-worker
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.32.1
+          ports:
+            - containerPort: 11434
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0"
+            - name: OLLAMA_KEEP_ALIVE
+              value: "-1"          # 모델 상주 (매 요청 로드 방지 — CPU 로드만 수십 초)
+            - name: OLLAMA_NUM_PARALLEL
+              value: "1"           # CPU 추론 — 동시 요청 직렬화
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
+          resources:
+            requests:
+              cpu: "4"
+              memory: 12Gi
+            limits:
+              cpu: "24"            # phone-api 등 동거 파드 여유 확보 (노드 32c)
+              memory: 32Gi
+          volumeMounts:
+            - name: models
+              mountPath: /root/.ollama
+          readinessProbe:
+            httpGet: { path: /api/version, port: 11434 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/version, port: 11434 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: ollama-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: ollama
+spec:
+  selector: { app: ollama }
+  ports:
+    - port: 11434
+      targetPort: 11434
